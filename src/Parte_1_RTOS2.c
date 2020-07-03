@@ -123,7 +123,7 @@ int main( void )
 
 	mutex1 = xSemaphoreCreateMutex();
 
-	cola1 = xQueueCreate( 20, sizeof( tLedTecla ) );
+	cola1 = xQueueCreate( 20, sizeof( tLedTecla) );
 
 	if( cola1 == NULL ) {
 
@@ -160,30 +160,32 @@ void tarea_tecla( void* taskParmPtr )
 	while( 1 )
 	{
 		fsmButtonUpdate( config );
-	 	vTaskDelay( 1 / portTICK_RATE_MS );
+		vTaskDelay( 1 / portTICK_RATE_MS );
 	}
 }
 
 
 void tarea_led( void* taskParmPtr )
 {
-    // ---------- CONFIGURACIONES ------------------------------
+	// ---------- CONFIGURACIONES ------------------------------
 	tLedTecla* config = (tLedTecla*) taskParmPtr;
 	//const char mensaje[] = "LED ON"; // Mensaje a enviar
 	char mensaje[9];
 	strcpy(mensaje,"LED ON\r\n" );
-    // ---------- REPETIR POR SIEMPRE --------------------------
-    while( TRUE )
-    {
-    	xSemaphoreTake( mutex1 , portMAX_DELAY );			//abrir seccion critica
-    	gpioWrite( LED1 , ON );
-    	vTaskDelay(500/portTICK_RATE_MS);
-		xQueueSend(cola1, &mensaje, portMAX_DELAY);			// enviar mensaje a la cola
-		gpioWrite( LED1, OFF );
-		xSemaphoreGive( mutex1 );							//cerrar seccion critica
+	// ---------- REPETIR POR SIEMPRE --------------------------
+	while( TRUE )
+	{
 
+
+		gpioWrite( LED1 , ON );
+		vTaskDelay(500/portTICK_RATE_MS);
+		xSemaphoreTake( mutex1 , portMAX_DELAY );			//abrir seccion critica
+		xQueueSend(cola1, &mensaje, portMAX_DELAY);			// enviar mensaje a la cola
+		xSemaphoreGive( mutex1 );							//cerrar seccion critica
+		gpioWrite( LED1, OFF );
 		vTaskDelay(1000/portTICK_RATE_MS);
-    }
+
+	}
 }
 
 void tarea_mensaje(void* taskParmPtr) {
@@ -195,12 +197,13 @@ void tarea_mensaje(void* taskParmPtr) {
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while(TRUE) {
 
-		xSemaphoreTake( mutex1 , portMAX_DELAY );
+
+
 		xQueueReceive(cola1, &envio, portMAX_DELAY);
+		xSemaphoreTake( mutex1 , portMAX_DELAY );
 		for(i=0; i < strlen(envio); i++){
 			printf("%c\r", envio[i]);
 		}
-
 		xSemaphoreGive( mutex1 );
 
 		vTaskDelay(1000/portTICK_RATE_MS);
